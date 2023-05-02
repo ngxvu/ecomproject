@@ -30,6 +30,7 @@ func main() {
 		&model.User{},
 		&model.Address{},
 		&model.ProductUser{},
+		&model.Order{},
 	); err != nil {
 		fmt.Println("An error occurred: ", err)
 		panic("Failed to connect database")
@@ -39,16 +40,28 @@ func main() {
 
 	// khởi tạo user handler
 	userHandler := handler.NewUserHandler(db)
+	// khởi tạo product handler
+	productHandler := handler.NewProductHandler(db)
+
 	// khởi tạo menu
 	fmt.Println("Lựa Chọn Chức Năng.")
 	reader := bufio.NewReader(os.Stdin)
 	for {
 		opt, _ := utils.GetInput("\n   1 - View Product\n   2 - Search Product.\n   3 - Sign Up.\n   4 - Login.\n   5 - Update & Exit.", reader)
 		switch opt {
+
 		case "1":
 			fmt.Println("View Product")
+			err := productHandler.ViewProduct()
+			if err != nil {
+				return
+			}
 		case "2":
 			fmt.Println("Search Product")
+			err := productHandler.SearchProduct()
+			if err != nil {
+				return
+			}
 		case "3":
 			if err := userHandler.SignUp(); err != nil {
 				fmt.Println("Lỗi tạo user: ", err)
@@ -56,13 +69,15 @@ func main() {
 				fmt.Println("Tạo user thành công")
 			}
 		case "4":
-			fmt.Println("SignIn")
-			
+			fmt.Println("LogIn")
+			err := userHandler.LogIn()
+			if err != nil {
+				return
+			}
 		case "5":
 			return
 		default:
-			fmt.Println("Lựa chọn đó không có - Hãy Chọn Lại.")
+			fmt.Println("Lựa Chọn đó không có - Hãy Chọn Lại.")
 		}
 	}
-
 }
