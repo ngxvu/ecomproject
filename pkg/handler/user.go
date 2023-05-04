@@ -82,7 +82,6 @@ func (h *UserHandler) SignUp() error {
 // Login ()
 
 func (h *UserHandler) LogIn() error {
-	listUser := model.User{}
 	reader := bufio.NewReader(os.Stdin)
 	email, _ := utils.GetInput("Nhập Email đăng nhập của bạn: ", reader)
 	if !validFormEmail(email) {
@@ -90,28 +89,28 @@ func (h *UserHandler) LogIn() error {
 	} else if !h.CheckEmailExist(email) {
 		return fmt.Errorf("Email chưa được đăng kí, mời đăng kí. ")
 	}
-	h.DbConnection.First(&listUser, "email = ?", email)
-	h.VerifyPassword()
+	h.DbConnection.First(&model.User{}, "email = ?", email)
+	err := h.VerifyPassword()
+	if err != nil {
+		return err
+	}
 	return nil
 }
 
-// HashPassword
-
 // VerifyPassword
 
-func (h *UserHandler) VerifyPassword() bool {
+func (h *UserHandler) VerifyPassword() error {
 
 	listUser := model.User{}
 	reader := bufio.NewReader(os.Stdin)
 	password, _ := utils.GetInput("Nhập Password Của Bạn: ", reader)
 	h.DbConnection.First(&listUser, "password = ?", password)
 	if password != listUser.Password {
-		fmt.Println("Incorrect password")
-		return false
+		return fmt.Errorf("Incorrect password. ")
 	}
 	fmt.Println("Login successful")
-	fmt.Printf("\n User found: \n- Name: %s \n- Email: %s", listUser.First_Name+" "+listUser.Last_Name, listUser.Email)
-	return true
+	fmt.Printf("\n User found: \n- Name: %s \n- Email: %s", listUser.FirstName+" "+listUser.LastName, listUser.Email)
+	return nil
 }
 
 // SearchProduct

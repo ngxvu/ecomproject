@@ -25,12 +25,13 @@ func main() {
 		fmt.Println("An error occurred: ", err)
 
 	}
-
 	if err := db.AutoMigrate(
 		&model.User{},
 		&model.Address{},
 		&model.ProductUser{},
 		&model.Order{},
+		&model.CartItem{},
+		&model.Product{},
 	); err != nil {
 		fmt.Println("An error occurred: ", err)
 		panic("Failed to connect database")
@@ -42,37 +43,48 @@ func main() {
 	userHandler := handler.NewUserHandler(db)
 	// khởi tạo product handler
 	productHandler := handler.NewProductHandler(db)
+	// khởi tạo product handler
+	//cartHandler := handler.NewCartHandler()
+	// khởi tạo productuserhandler
+	productUserHandler := handler.NewProProductUserHandler(db)
 
 	// khởi tạo menu
 	fmt.Println("Lựa Chọn Chức Năng.")
 	reader := bufio.NewReader(os.Stdin)
 	for {
-		opt, _ := utils.GetInput("\n   1 - View Product\n   2 - Search Product.\n   3 - Sign Up.\n   4 - Login.\n   5 - Update & Exit.", reader)
+		opt, _ := utils.GetInput("\n   1 - View Product\n   2 - Search Product.\n   3 - Sign Up.\n   4 - Login.\n   5 - Exit.", reader)
 		switch opt {
-
 		case "1":
-			fmt.Println("View Product")
 			err := productHandler.ViewProduct()
 			if err != nil {
 				return
 			}
 		case "2":
-			fmt.Println("Search Product")
 			err := productHandler.SearchProduct()
 			if err != nil {
 				return
 			}
 		case "3":
 			if err := userHandler.SignUp(); err != nil {
-				fmt.Println("Lỗi tạo user: ", err)
+				fmt.Println("Lỗi tạo user:", err)
 			} else {
 				fmt.Println("Tạo user thành công")
 			}
 		case "4":
-			fmt.Println("LogIn")
-			err := userHandler.LogIn()
-			if err != nil {
-				return
+			if err := userHandler.LogIn(); err != nil {
+				fmt.Println(" Lỗi Đăng Nhập:", err)
+			} else {
+				for {
+					opt, _ := utils.GetInput("\n   1 - Add Product.\n   2 - Add To Cart.\n   3 - Remove Product Prom Cart.\n   4 - Check Out.\n   5 - Edit Your Information.\n   6 - Exit.", reader)
+					switch opt {
+					case "1":
+						fmt.Println("Add Product.")
+						err := productUserHandler.AddProductToUserProduct()
+						if err != nil {
+							return
+						}
+					}
+				}
 			}
 		case "5":
 			return

@@ -29,18 +29,37 @@ func (h *ProductHandler) SearchProduct() error {
 	productname, _ := utils.GetInput(" Nhập Tên Sản Phẩm Cần Tìm: ", reader)
 	listProduct := model.Product{}
 	h.DbConnection.First(&listProduct, "product_name = ?", productname)
-	fmt.Printf("User found: Product Name=%s Product Price=%f", listProduct.Product_Name, listProduct.Price)
+	if !h.ProductExist(productname) {
+		fmt.Println("Lỗi: Không Tìm Thấy Tên Sản Phẩm.")
+		return nil
+	}
+	fmt.Printf("\nThông Tin Sản Phẩm: \nProduct Name=%s \nProduct Price=%d\n", listProduct.ProductName, listProduct.Price)
 	return nil
+}
+
+// checkProductExist
+
+func (h *ProductHandler) ProductExist(product_name string) bool {
+	var listProduct []model.Product
+	err := h.DbConnection.Model(&listProduct).Where("product_name = ?", product_name).First(&listProduct).Error
+	if err != nil {
+		return false
+	}
+	return true
 }
 
 // View Product
 
 func (h *ProductHandler) ViewProduct() error {
-	listProduct := model.Product{}
+	var listProduct []model.Product
+	fmt.Println(" *** Danh Sách Sản Phẩm ***")
 	result := h.DbConnection.Find(&listProduct)
 	if result.Error != nil {
 		panic(result.Error)
 	}
-	fmt.Println(listProduct.Product_Name)
+	for _, product := range listProduct {
+
+		fmt.Println("\tLoại Sản Phẩm: \n\t- Tên Sản phẩm: ", product.ProductName, "\n\t- Giá Sản Phẩm: ", product.Price)
+	}
 	return nil
 }
