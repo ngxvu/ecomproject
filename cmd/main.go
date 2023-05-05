@@ -25,6 +25,7 @@ func main() {
 		fmt.Println("An error occurred: ", err)
 
 	}
+	_ = db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`)
 	if err := db.AutoMigrate(
 		&model.User{},
 		&model.Address{},
@@ -37,7 +38,7 @@ func main() {
 		panic("Failed to connect database")
 	}
 
-	fmt.Println("Migrated models to DB successfully")
+	fmt.Println("Migrated Models To DB Successfully")
 
 	// khởi tạo user handler
 	userHandler := handler.NewUserHandler(db)
@@ -68,7 +69,7 @@ func main() {
 			if err := userHandler.SignUp(); err != nil {
 				fmt.Println("Lỗi tạo user:", err)
 			} else {
-				fmt.Println("Tạo user thành công")
+				fmt.Println("Tạo user Thành Công")
 			}
 		case "4":
 			if err := userHandler.LogIn(); err != nil {
@@ -79,7 +80,7 @@ func main() {
 					switch opt {
 					case "1":
 						fmt.Println("Add Product.")
-						err := productUserHandler.AddProductToUserProduct()
+						err := productUserHandler.AddProductToFavorite()
 						if err != nil {
 							return
 						}

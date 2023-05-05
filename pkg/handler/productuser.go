@@ -21,7 +21,7 @@ func NewProProductUserHandler(db *gorm.DB) ProductUserHandler {
 
 // AddProductToUserProduct
 
-func (h *ProductUserHandler) AddProductToUserProduct() error {
+func (h *ProductUserHandler) AddProductToFavorite() error {
 
 	reader := bufio.NewReader(os.Stdin)
 	for {
@@ -37,7 +37,7 @@ func (h *ProductUserHandler) AddProductToUserProduct() error {
 			var listproducts []model.Product
 			result := h.DbConnection.Table("products").Find(&listproducts)
 			if result.Error != nil {
-				panic(result.Error)
+				return nil
 			}
 			var listproductsUser []model.ProductUser
 			for _, product := range products {
@@ -49,12 +49,16 @@ func (h *ProductUserHandler) AddProductToUserProduct() error {
 					Image:         product.Image,
 				}
 				listproductsUser = append(listproductsUser, productsUser)
+				fmt.Sprintf("Đã Add Sản Phẩm %s Vào Danh Mục Yêu Thích", product.ProductName)
 			}
 			result = h.DbConnection.Table("product_users").Create(&listproductsUser)
 			if result.Error != nil {
-				panic(result.Error)
+				fmt.Println("Đã xảy ra lỗi. ")
+				return nil
 			}
 		case "2":
+			return nil
+		case "6":
 			return nil
 		default:
 			fmt.Println("Lựa Chọn đó không có - Hãy Chọn Lại.")
