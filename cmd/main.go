@@ -20,34 +20,23 @@ func main() {
 		Password: "547436",
 		Dbname:   "postgres",
 	})
-
 	if err != nil {
-		fmt.Println("An error occurred: ", err)
-
+		fmt.Println("Lỗi đăng Nhập ", err)
 	}
-	_ = db.Exec(`CREATE EXTENSION IF NOT EXISTS "uuid-ossp"`)
-	if err := db.AutoMigrate(
-		&model.User{},
-		&model.Address{},
-		&model.ProductUser{},
-		&model.Order{},
-		&model.CartItem{},
-		&model.Product{},
-	); err != nil {
-		fmt.Println("An error occurred: ", err)
-		panic("Failed to connect database")
-	}
-
-	fmt.Println("Migrated Models To DB Successfully")
-
+	// khởi tạo database handler
+	dbHandler := handler.NewDbHandler(db)
 	// khởi tạo user handler
 	userHandler := handler.NewUserHandler(db)
 	// khởi tạo product handler
 	productHandler := handler.NewProductHandler(db)
-	// khởi tạo product handler
-	//cartHandler := handler.NewCartHandler()
 	// khởi tạo productuserhandler
 	productUserHandler := handler.NewProProductUserHandler(db)
+
+	// Migrate Db
+	err = dbHandler.Migrate(db)
+	if err != nil {
+		return
+	}
 
 	// khởi tạo menu
 	fmt.Println("Lựa Chọn Chức Năng.")
@@ -55,6 +44,11 @@ func main() {
 	for {
 		opt, _ := utils.GetInput("\n   1 - View Product\n   2 - Search Product.\n   3 - Sign Up.\n   4 - Login.\n   5 - Exit.", reader)
 		switch opt {
+		case "0": // testcase
+			err := userHandler.EditInfo()
+			if err != nil {
+				return
+			}
 		case "1":
 			err := productHandler.ViewProduct()
 			if err != nil {
@@ -75,6 +69,11 @@ func main() {
 			if err := userHandler.LogIn(); err != nil {
 				fmt.Println(" Lỗi Đăng Nhập:", err)
 			} else {
+				fmt.Println("\nĐăng Nhập Thành Công.\n")
+				err := userHandler.GetToken()
+				if err != nil {
+					return
+				}
 				for {
 					opt, _ := utils.GetInput("\n   1 - Add Product.\n   2 - Add To Cart.\n   3 - Remove Product Prom Cart.\n   4 - Check Out.\n   5 - Edit Your Information.\n   6 - Exit.", reader)
 					switch opt {
@@ -84,6 +83,15 @@ func main() {
 						if err != nil {
 							return
 						}
+					case "5":
+						err := userHandler.EditInfo()
+						if err != nil {
+							return
+						}
+					case "6":
+						return
+					default:
+						fmt.Println("Lựa Chọn đó không có - Hãy Chọn Lại.")
 					}
 				}
 			}

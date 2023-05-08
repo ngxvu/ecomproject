@@ -32,29 +32,35 @@ func (h *ProductUserHandler) AddProductToFavorite() error {
 			input, _ := utils.GetInput("Nhập Tên Sản Phẩm: ", reader)
 			err := h.DbConnection.Model(&products).Where("product_name = ?", input).First(&products).Error
 			if err != nil {
+				fmt.Println("Đã xảy ra lỗi ở Model Where. ")
 				return err
 			}
 			var listproducts []model.Product
 			result := h.DbConnection.Table("products").Find(&listproducts)
 			if result.Error != nil {
+				fmt.Println("Đã xảy ra lỗi ở Table Find. ")
 				return nil
+
 			}
 			var listproductsUser []model.ProductUser
 			for _, product := range products {
 				productsUser := model.ProductUser{
-					ProductUserID: product.ProductID,
-					ProductName:   product.ProductName,
-					Price:         product.Price,
-					Rating:        product.Rating,
-					Image:         product.Image,
+					ID:          product.ProductID,
+					ProductName: product.ProductName,
+					Price:       product.Price,
+					Rating:      product.Rating,
+					Image:       product.Image,
 				}
+
 				listproductsUser = append(listproductsUser, productsUser)
-				fmt.Sprintf("Đã Add Sản Phẩm %s Vào Danh Mục Yêu Thích", product.ProductName)
 			}
 			result = h.DbConnection.Table("product_users").Create(&listproductsUser)
 			if result.Error != nil {
 				fmt.Println("Đã xảy ra lỗi. ")
 				return nil
+			} else {
+				fmt.Printf(`Đã Thêm "%s" Vào mục yêu thích`, input)
+				fmt.Println("")
 			}
 		case "2":
 			return nil

@@ -2,7 +2,6 @@ package handler
 
 import (
 	"gorm.io/gorm"
-	"merakichain.com/golang_ecommerce/pkg/model"
 )
 
 //var (
@@ -27,21 +26,21 @@ func NewCartHandler(db *gorm.DB) CartHandler {
 
 // AddProductToCart
 
-func (h *CartHandler) AddProductToCart(productID string, quantity int) error {
-	product := model.Product{}
-	if err := h.DbConnection.First(&product, productID).Error; err != nil {
-		return err
-	}
-	cartItem := model.CartItem{
-		ProductUserID: productID,
-		Quantity:      quantity,
-	}
-	// Save cart item to database
-	if err := h.DbConnection.Create(&cartItem).Error; err != nil {
-		return err
-	}
-	return nil
-}
+//func (h *CartHandler) AddProductToCart(productID string, quantity int) error {
+//	product := model.Product{}
+//	if err := h.DbConnection.First(&product, productID).Error; err != nil {
+//		return err
+//	}
+//	cartItem := model.CartItem{
+//		ProductUserID: ,
+//		Quantity:      quantity,
+//	}
+//	// Save cart item to database
+//	if err := h.DbConnection.Create(&cartItem).Error; err != nil {
+//		return err
+//	}
+//	return nil
+//}
 
 // phai co user ( user ID ) add product ( product ID ) to Cart. at the same time, check product is available,
 // add item to user cart
