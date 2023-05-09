@@ -2,6 +2,9 @@ package handler
 
 import (
 	"bufio"
+	"crypto/rand"
+	"crypto/sha256"
+	"encoding/base64"
 	"fmt"
 	"gorm.io/gorm"
 	"merakichain.com/golang_ecommerce/pkg/model"
@@ -53,7 +56,6 @@ func (h *UserHandler) CheckPhoneExist(phone string) bool {
 }
 
 // Signup ()
-
 func (h *UserHandler) SignUp() error {
 	reader := bufio.NewReader(os.Stdin)
 	email, _ := utils.GetInput(" Mời bạn nhập email: ", reader)
@@ -63,6 +65,12 @@ func (h *UserHandler) SignUp() error {
 		return fmt.Errorf(" Email Đã Tồn Tại. ")
 	}
 	password, _ := utils.GetInput(" Mời bạn nhập password: ", reader)
+
+	// define
+	salt, hashedPassword, err := HashPassword(password)
+	if err != nil {
+		return err
+	}
 	phone, _ := utils.GetInput(" Mời bạn nhập số điện thoại: ", reader)
 	if h.CheckPhoneExist(phone) {
 		fmt.Println("Số Điện Thoại Đã Được Đăng Kí")
@@ -70,48 +78,67 @@ func (h *UserHandler) SignUp() error {
 
 	if err := h.DbConnection.Create(&model.User{
 		Email:    email,
-		Password: password,
+		Password: hashedPassword,
 		Phone:    phone,
 		Token:    utils.DefaulToken,
+		Salt:     salt,
 	}).Error; err != nil {
 		return err
 	}
-
 	return nil
 }
 
-// Login ()
+// HashPassword
 
-func (h *UserHandler) LogIn() error {
+func HashPassword(password string) (string, string, error) {
+	salt := make([]byte, 16)
+	_, err := rand.Read(salt)
+	if err != nil {
+		return "", "", err
+	}
+	saltedPassword := append([]byte(password), salt...)
+	hash := sha256.Sum256(saltedPassword)
+	encodeHash := base64.StdEncoding.EncodeToString(hash[:])
+	encodeSalt := base64.StdEncoding.EncodeToString(saltedPassword[:])
+	return encodeSalt, encodeHash, nil
+}
+
+// AuthenticateUser
+
+func (h *UserHandler) AuthenticateUser() error {
 	reader := bufio.NewReader(os.Stdin)
+	listUser := model.User{}
+	// get input email
 	email, _ := utils.GetInput("Nhập Email đăng nhập của bạn: ", reader)
 	if !validFormEmail(email) {
-		return fmt.Errorf("Lỗi định dạng email. ")
+		return fmt.Errorf("Lỗi Định Dạng Email. ")
 	} else if !h.CheckEmailExist(email) {
-		return fmt.Errorf("Email chưa được đăng kí, mời đăng kí. ")
+		return fmt.Errorf(" Email Chưa Được Đăng Kí. Mời Đăng Kí ")
 	}
-	h.DbConnection.First(&model.User{}, "email = ?", email)
-	err := h.VerifyPassword()
-	if err != nil {
-		return err
+
+	// Retrieve the user record from the database by email
+	rs := h.DbConnection.Table("users").Where("email = ?", email).First(&listUser)
+	if rs.Error != nil {
+		return rs.Error
 	}
-	return nil
-}
-
-// VerifyPassword
-
-func (h *UserHandler) VerifyPassword() error {
-
-	listUser := model.User{}
-	reader := bufio.NewReader(os.Stdin)
 	password, _ := utils.GetInput("Nhập Password Của Bạn: ", reader)
-	h.DbConnection.First(&listUser, "password = ?", password)
-	if password != listUser.Password {
-		return fmt.Errorf("Incorrect password. ")
+
+	// decode salt
+	dst := make([]byte, base64.StdEncoding.DecodedLen(len(listUser.Salt)))
+	n, _ := base64.StdEncoding.Decode(dst, []byte(listUser.Salt))
+	dst = dst[:n]
+	fmt.Printf("%q\n", dst)
+	saltedPassword := append([]byte(password), dst...)
+	hash := sha256.Sum256(saltedPassword)
+	encodedHash := base64.StdEncoding.EncodeToString(hash[:])
+
+	// so sang voi pass trong database
+	if listUser.Password == encodedHash {
+		fmt.Println("Login successful")
+		fmt.Printf("\n User found: \n- Name: %s \n- Email: %s", listUser.FirstName+" "+listUser.LastName, listUser.Email)
+		return nil
 	}
-	fmt.Println("Login successful")
-	fmt.Printf("\n User found: \n- Name: %s \n- Email: %s", listUser.FirstName+" "+listUser.LastName, listUser.Email)
-	return nil
+	return fmt.Errorf("Incorrect password. ")
 }
 
 // GetToken
@@ -126,12 +153,14 @@ func (h *UserHandler) GetToken() error {
 // PrintUserInformation
 
 func (h *UserHandler) EditInfo() error {
+	// In thong tin ban dau
 	listUser := model.User{}
 	reader := bufio.NewReader(os.Stdin)
 	email, _ := utils.GetInput("Nhập Email Của Bạn: ", reader)
 	fmt.Println(" Thông Tin Hiện Tại: ")
 	h.DbConnection.Table("users").Select("id,first_name,last_name,email,phone").Where(" email = ?", email).First(&listUser)
 	fmt.Printf("- First Name: %s\n- Last Name: %s\n- Email: %s\n- Phone: %s\n", listUser.FirstName, listUser.LastName, listUser.Email, listUser.Phone)
+	// Thay doi thong tin
 	id := listUser.ID
 	for {
 		opt, _ := utils.GetInput("Chọn Thông Tin Bạn Muốn Thay Đổi: \n 1 - Name \n 2 - Email \n 3 - Phone \n 4 - Return", reader)
@@ -163,5 +192,3 @@ func (h *UserHandler) EditInfo() error {
 		fmt.Printf("- First Name: %s\n- Last Name: %s\n- Email: %s\n- Phone: %s\n", listUser.FirstName, listUser.LastName, listUser.Email, listUser.Phone)
 	}
 }
-
-// SearchProductByQuery

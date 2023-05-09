@@ -66,10 +66,10 @@ func main() {
 				fmt.Println("Tạo user Thành Công")
 			}
 		case "4":
-			if err := userHandler.LogIn(); err != nil {
+			if err := userHandler.AuthenticateUser(); err != nil {
 				fmt.Println(" Lỗi Đăng Nhập:", err)
 			} else {
-				fmt.Println("\nĐăng Nhập Thành Công.\n")
+				fmt.Println("\n Đăng Nhập Thành Công. \n")
 				err := userHandler.GetToken()
 				if err != nil {
 					return

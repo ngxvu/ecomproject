@@ -13,7 +13,7 @@ type User struct {
 	Email          string        `json:"email" validate:"email, required"`
 	Phone          string        `json:"phone" validate:"required"`
 	Token          string        `json:"token"`
-	RefreshToken   string        `json:"refresh_token"`
+	Salt           string        `json:"salt"`
 	UserID         string        `json:"user_id"`
 	CreatedAt      time.Time     `json:"created_at"`
 	UpdatedAt      time.Time     `json:"updated_at"`
