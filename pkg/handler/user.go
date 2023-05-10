@@ -91,21 +91,21 @@ func (h *UserHandler) SignUp() error {
 // HashPassword
 
 func HashPassword(password string) (string, string, error) {
-	salt := make([]byte, 16)
+	salt := make([]byte, 16) // salt = 123
 	_, err := rand.Read(salt)
 	if err != nil {
 		return "", "", err
 	}
-	saltedPassword := append([]byte(password), salt...)
-	hash := sha256.Sum256(saltedPassword)
-	encodeHash := base64.StdEncoding.EncodeToString(hash[:])
-	encodeSalt := base64.StdEncoding.EncodeToString(saltedPassword[:])
+	saltedPassword := append([]byte(password), salt...)      // pass + salt = 456 + 123
+	hash := sha256.Sum256(saltedPassword)                    // hash 456 + 123
+	encodeSalt := base64.StdEncoding.EncodeToString(salt[:]) // encode "456 + 123"
+	encodeHash := base64.StdEncoding.EncodeToString(hash[:]) // encode "hash 456 + 123"
 	return encodeSalt, encodeHash, nil
 }
 
 // AuthenticateUser
 
-func (h *UserHandler) AuthenticateUser() error {
+func (h *UserHandler) LogIn() error {
 	reader := bufio.NewReader(os.Stdin)
 	listUser := model.User{}
 	// get input email
@@ -124,14 +124,17 @@ func (h *UserHandler) AuthenticateUser() error {
 	password, _ := utils.GetInput("Nhập Password Của Bạn: ", reader)
 
 	// decode salt
-	dst := make([]byte, base64.StdEncoding.DecodedLen(len(listUser.Salt)))
-	n, _ := base64.StdEncoding.Decode(dst, []byte(listUser.Salt))
-	dst = dst[:n]
-	fmt.Printf("%q\n", dst)
-	saltedPassword := append([]byte(password), dst...)
+	deSalt := make([]byte, base64.StdEncoding.DecodedLen(len(listUser.Salt)))
+	n, _ := base64.StdEncoding.Decode(deSalt, []byte(listUser.Salt))
+	deSalt = deSalt[:n] //[]byte
+	// decode Password
+	dePass := make([]byte, base64.StdEncoding.DecodedLen(len(listUser.Password)))
+	m, _ := base64.StdEncoding.Decode(dePass, []byte(listUser.Password))
+	dePass = dePass[:m] //[]byte
+
+	saltedPassword := append([]byte(password), deSalt...)
 	hash := sha256.Sum256(saltedPassword)
 	encodedHash := base64.StdEncoding.EncodeToString(hash[:])
-
 	// so sang voi pass trong database
 	if listUser.Password == encodedHash {
 		fmt.Println("Login successful")
@@ -152,18 +155,18 @@ func (h *UserHandler) GetToken() error {
 
 // PrintUserInformation
 
-func (h *UserHandler) EditInfo() error {
+func (h *UserHandler) EditUserInfo() error {
 	// In thong tin ban dau
 	listUser := model.User{}
 	reader := bufio.NewReader(os.Stdin)
 	email, _ := utils.GetInput("Nhập Email Của Bạn: ", reader)
 	fmt.Println(" Thông Tin Hiện Tại: ")
-	h.DbConnection.Table("users").Select("id,first_name,last_name,email,phone").Where(" email = ?", email).First(&listUser)
+	h.DbConnection.Table("users").Select("id,first_name,last_name,email,phone,password").Where(" email = ?", email).First(&listUser)
 	fmt.Printf("- First Name: %s\n- Last Name: %s\n- Email: %s\n- Phone: %s\n", listUser.FirstName, listUser.LastName, listUser.Email, listUser.Phone)
 	// Thay doi thong tin
 	id := listUser.ID
 	for {
-		opt, _ := utils.GetInput("Chọn Thông Tin Bạn Muốn Thay Đổi: \n 1 - Name \n 2 - Email \n 3 - Phone \n 4 - Return", reader)
+		opt, _ := utils.GetInput("Chọn Thông Tin Bạn Muốn Thay Đổi: \n 1 - Name \n 2 - Email \n 3 - Phone \n 4 - Password \n 5 - Return", reader)
 		switch opt {
 		case "1":
 			newfname, _ := utils.GetInput("Nhập First Name: ", reader)
@@ -174,17 +177,25 @@ func (h *UserHandler) EditInfo() error {
 			newemail, _ := utils.GetInput("Nhập Email: ", reader)
 			if !h.CheckEmailExist(newemail) {
 				h.DbConnection.Table("users").Where("id = ?", id).Update("email", newemail)
+				fmt.Println("Email Đã Được Thay Đổi.")
 			} else {
 				return fmt.Errorf("Email Này Đã Được Đăng Kí, Vui Lòng Chọn Email Khác. ")
 			}
 		case "3":
-			newphone, _ := utils.GetInput("Nhập Số Điện Thoại", reader)
+			newphone, _ := utils.GetInput("Nhập Số Điện Thoại. ", reader)
 			if !h.CheckPhoneExist(newphone) {
-				h.DbConnection.Table("user").Where("id = ?", id).Update("phone", newphone)
+				h.DbConnection.Table("users").Where("id = ?", id).Update("phone", newphone)
+				fmt.Println("Số Điện Thoại Đã Được Thay Đổi.")
 			} else {
 				return fmt.Errorf("Số Điện Thoại Này Đã Được Đăng Kí, Vui Lòng Chọn Số Điện Thoại Khác. ")
 			}
 		case "4":
+			//newPassword, _ := utils.GetInput("Nhập Password Mới Của Bạn. ", reader)
+			//newsalt, newhashedPassword, _ := HashPassword(newPassword)
+			//h.DbConnection.Table("users").Where("id = ?", id).Update("password", newhashedPassword)
+			//h.DbConnection.Table("users").Where("id = ?", id).Update("salt", newsalt)
+			//fmt.Println("Password Đã Được Thay Đổi.")
+		case "5":
 			return nil
 		default:
 			fmt.Println("Lựa Chọn Đó Không Có")

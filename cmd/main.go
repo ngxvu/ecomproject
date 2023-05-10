@@ -45,7 +45,7 @@ func main() {
 		opt, _ := utils.GetInput("\n   1 - View Product\n   2 - Search Product.\n   3 - Sign Up.\n   4 - Login.\n   5 - Exit.", reader)
 		switch opt {
 		case "0": // testcase
-			err := userHandler.EditInfo()
+			err := userHandler.LogIn()
 			if err != nil {
 				return
 			}
@@ -66,7 +66,7 @@ func main() {
 				fmt.Println("Tạo user Thành Công")
 			}
 		case "4":
-			if err := userHandler.AuthenticateUser(); err != nil {
+			if err := userHandler.LogIn(); err != nil {
 				fmt.Println(" Lỗi Đăng Nhập:", err)
 			} else {
 				fmt.Println("\n Đăng Nhập Thành Công. \n")
@@ -84,7 +84,7 @@ func main() {
 							return
 						}
 					case "5":
-						err := userHandler.EditInfo()
+						err := userHandler.EditUserInfo()
 						if err != nil {
 							return
 						}
