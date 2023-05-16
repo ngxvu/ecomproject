@@ -37,7 +37,7 @@ func (h *ProductHandler) SearchProduct() error {
 	return nil
 }
 
-// checkProductExist
+// CheckProductExist
 
 func (h *ProductHandler) ProductExist(product_name string) bool {
 	var listProduct []model.Product
@@ -52,13 +52,12 @@ func (h *ProductHandler) ProductExist(product_name string) bool {
 
 func (h *ProductHandler) ViewProduct() error {
 	var listProduct []model.Product
-	fmt.Println(" *** Danh Sách Sản Phẩm ***")
+	fmt.Println(" *** Danh Sách Sản Phẩm *** ")
 	result := h.DbConnection.Find(&listProduct)
 	if result.Error != nil {
 		panic(result.Error)
 	}
 	for _, product := range listProduct {
-
 		fmt.Println("\tLoại Sản Phẩm: \n\t- Tên Sản phẩm: ", product.ProductName, "\n\t- Giá Sản Phẩm: ", product.Price)
 	}
 	return nil

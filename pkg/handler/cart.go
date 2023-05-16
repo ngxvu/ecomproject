@@ -42,8 +42,8 @@ func NewCartHandler(db *gorm.DB) CartHandler {
 //	return nil
 //}
 
-// phai co user ( user ID ) add product ( product ID ) to Cart. at the same time, check product is available,
-// add item to user cart
+// phai co handleruser ( handleruser ID ) add product ( product ID ) to Cart. at the same time, check product is available,
+// add item to handleruser cart
 
 // RemoveCartItem
 
